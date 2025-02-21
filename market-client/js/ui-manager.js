@@ -19,7 +19,9 @@ class UIManager {
         const buyButton = document.createElement("button");
         buyButton.className = "action-button buy-button";
         buyButton.textContent = "Buy NFT";
-        buyButton.onclick = () => onBuyClick(tokenId);
+        if (typeof onBuyClick === 'function') {
+            buyButton.onclick = () => onBuyClick(tokenId);
+        }
 
         nftDiv.append(img, ownerP, buyButton);
         return nftDiv;

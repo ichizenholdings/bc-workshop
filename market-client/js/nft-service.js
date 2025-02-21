@@ -24,8 +24,8 @@ const NFT_ABI = [
 ];
 
 class NFTService {
-    constructor() {
-        this.web3 = new Web3(NFT_CONFIG.RPC_URL);
+    constructor(web3) {
+        this.web3 = web3 || new Web3(NFT_CONFIG.RPC_URL);
         this.contract = new this.web3.eth.Contract(NFT_ABI, NFT_CONFIG.CONTRACT_ADDRESS);
     }
 

@@ -36,19 +36,18 @@
         import { NFTService, NFT_CONFIG } from './js/nft-service.js';
         import { UIManager } from './js/ui-manager.js';
         import { MarketplaceService } from './js/marketplace-service.js';
+        import { WalletService } from './js/wallet-service.js';
 
-        let web3, accounts, nftService, marketplaceService, uiManager;
+        let web3, accounts, nftService, marketplaceService, uiManager, walletService;
 
         async function updateWalletInfo(address) {
-            // アドレス表示の更新
             const walletAddress = document.getElementById('wallet-address');
             walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(38)}`;
 
             // 残高の取得と表示
-            const balance = await web3.eth.getBalance(address);
-            const balanceEth = web3.utils.fromWei(balance, 'ether');
+            const balance = await walletService.getBalance(address);
             const walletBalance = document.getElementById('wallet-balance');
-            walletBalance.textContent = `${Number(balanceEth).toFixed(4)} ETH`;
+            walletBalance.textContent = `${Number(balance).toFixed(4)} ETH`;
 
             // Blockiesアイコンの生成
             const jazziconElement = document.getElementById('jazzicon');
@@ -67,40 +66,29 @@
 
         async function connectWallet() {
             try {
-                if (typeof window.ethereum === 'undefined') {
-                    throw new Error('MetaMaskがインストールされていません');
-                }
+                walletService = new WalletService();
+                const { address, web3 } = await walletService.connect();
 
-                accounts = await window.ethereum.request({
-                    method: 'eth_requestAccounts'
+                // Web3インスタンスを設定
+                window.web3 = web3;
+                accounts = [address];
+
+                // ウォレット情報を更新
+                await updateWalletInfo(address);
+
+                // アカウント変更時のコールバックを設定
+                walletService.setAccountsChangedCallback(async (newAddress) => {
+                    accounts = [newAddress];
+                    await updateWalletInfo(newAddress);
+                    await displayMyNFTs();
                 });
 
-                if (!accounts || accounts.length === 0) {
-                    throw new Error('ウォレットの接続に失敗しました');
-                }
-
-                await updateWalletInfo(accounts[0]);
+                // NFTの表示を更新
                 await displayMyNFTs();
-
             } catch (error) {
-                console.error("Wallet connection error:", error);
-                alert(error.message);
+                console.error("ウォレット接続エラー:", error);
+                alert("ウォレット接続に失敗しました: " + error.message);
             }
-        }
-
-        // アカウント変更時のハンドラーも更新
-        if (window.ethereum) {
-            window.ethereum.on('accountsChanged', async function (newAccounts) {
-                accounts = newAccounts;
-                if (accounts.length > 0) {
-                    await updateWalletInfo(accounts[0]);
-                    await displayMyNFTs();
-                } else {
-                    document.getElementById('wallet-info').style.display = 'none';
-                    document.getElementById('connect-wallet').style.display = 'block';
-                    document.getElementById('nft-container').innerHTML = '';
-                }
-            });
         }
 
         async function displayMyNFTs() {

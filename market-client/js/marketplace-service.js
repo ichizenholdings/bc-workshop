@@ -2,7 +2,7 @@ import { NFT_CONFIG } from './nft-service.js';
 
 // マーケットプレイスの設定
 const MARKETPLACE_CONFIG = {
-    CONTRACT_ADDRESS: "YOUR_MARKETPLACE_CONTRACT_ADDRESS" // デプロイ後のアドレスを設定
+    CONTRACT_ADDRESS: "0xcd98cdfaa24a08146d88414c78ba0bebf41dc5d5" // デプロイ後のアドレスを設定
 };
 
 // マーケットプレイスのABI
@@ -114,6 +114,18 @@ class MarketplaceService {
         return nftContract.methods
             .approve(MARKETPLACE_CONFIG.CONTRACT_ADDRESS, tokenId)
             .send({ from: accounts[0] });
+    }
+
+    async buyNFT(itemId, price) {
+        const accounts = await this.web3.eth.getAccounts();
+        if (!accounts[0]) throw new Error("No wallet connected");
+
+        return this.contract.methods
+            .buyItem(itemId)
+            .send({
+                from: accounts[0],
+                value: price // 購入価格をwei単位で送信
+            });
     }
 }
 

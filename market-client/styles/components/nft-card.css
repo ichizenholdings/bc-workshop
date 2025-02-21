@@ -78,3 +78,13 @@
     color: var(--text-muted);
     margin: 8px 0;
 }
+
+.error-message {
+    color: var(--text-error);
+    text-align: center;
+    padding: 20px;
+    background-color: var(--bg-error);
+    border-radius: 8px;
+    margin: 20px auto;
+    max-width: 400px;
+}

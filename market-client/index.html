@@ -24,17 +24,39 @@
     <script type="module">
         import { NFTService, NFT_CONFIG } from './js/nft-service.js';
         import { UIManager } from './js/ui-manager.js';
+        import { MarketplaceService } from './js/marketplace-service.js';
+        import { WalletService } from './js/wallet-service.js';
 
-        async function initialize() {
-            const nftService = new NFTService();
-            const uiManager = new UIManager();
+        let nftService, marketplaceService, uiManager, walletService;
 
+        async function buyNFT(tokenId) {
+            try {
+                if (!walletService || !walletService.isConnected()) {
+                    alert("ウォレットを接続してください");
+                    return;
+                }
+
+                const price = prompt("購入価格を入力してください（ETH）:", "0.1");
+                if (!price) return;
+
+                const priceWei = Web3.utils.toWei(price, 'ether');
+                await marketplaceService.buyNFT(tokenId, priceWei);
+
+                alert("NFTの購入が完了しました！");
+                location.reload();
+            } catch (error) {
+                console.error("NFT購入エラー:", error);
+                alert("NFTの購入に失敗しました: " + error.message);
+            }
+        }
+
+        async function displayNFTs() {
             uiManager.clearContainer();
 
             for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
                 try {
                     const nftData = await nftService.getNFTData(tokenId);
-                    const nftCard = uiManager.createNFTCard(nftData);
+                    const nftCard = uiManager.createNFTCard(nftData, buyNFT);
                     uiManager.container.appendChild(nftCard);
                 } catch (error) {
                     uiManager.showError(tokenId, error);
@@ -42,6 +64,32 @@
             }
 
             uiManager.hideLoading();
+        }
+
+        async function initialize() {
+            try {
+                // 1. まずUIManagerを初期化
+                uiManager = new UIManager();
+
+                // 2. WalletServiceを初期化して接続
+                walletService = new WalletService();
+                const { web3 } = await walletService.connect();
+
+                // 3. Web3が初期化された後に他のサービスを初期化
+                nftService = new NFTService(web3);
+                marketplaceService = new MarketplaceService(web3);
+
+                // 4. NFTを表示
+                await displayNFTs();
+            } catch (error) {
+                console.error("初期化エラー:", error);
+                uiManager.hideLoading();
+                // エラーメッセージを表示
+                const errorDiv = document.createElement("div");
+                errorDiv.className = "error-message";
+                errorDiv.textContent = "ウォレットを接続してください";
+                uiManager.container.appendChild(errorDiv);
+            }
         }
 
         initialize();
