@@ -1,0 +1,40 @@
+.wallet-info {
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.jazzicon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.wallet-details {
+    flex-grow: 1;
+}
+
+.wallet-address {
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 1.1em;
+    margin: 0 0 5px 0;
+}
+
+.wallet-balance {
+    color: var(--text-secondary);
+    font-size: 1.2em;
+    margin: 0;
+    font-weight: 500;
+}

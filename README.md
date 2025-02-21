@@ -1,51 +1,26 @@
-# ブロックチェーン技術講座 Workshop②
+# NFT Marketplace dApp
 
-## カバー内容
+シンプルなNFTマーケットプレイスのフロントエンド実装です。ERC721トークンの表示、リスト、購入機能を提供します。
 
-- Web3 Wallet 実装
-- ローカルの Ethereum Node と通信
-- NFT Contract 実装
-- NFT Market 実装
+## 機能
 
-## 事前準備
+- NFTギャラリー表示
+- ウォレット接続（MetaMask）
+- 所有NFTの表示
+- NFTのマーケットプレイスへのリスト
+- NFTの購入
 
-### 必須ツール
+## 技術スタック
 
-- Node.js
-- Go
-- geth
+- Web3.js: イーサリアムブロックチェーンとの対話
+- Ethereum Blockies: ウォレットアドレスのアイコン生成
+- CSS Variables: テーマカラーの一元管理
+- モジュラーJS: 再利用可能なコンポーネント設計
 
-## 講義内容
-
-### Web3 Wallet 実装
-
-### ローカルの Ethereum Node と通信
-
-### NFT Contract 実装
-
-### NFT Market 実装
-
-## ディレクトリ構造
+## プロジェクト構造
 
 ```bash
 .
 ├── wallet
 ├── nft-market
-├── node
 ```
-
-## 利用想定 URL
-
-| title     | URL                        |
-| --------- | -------------------------- |
-| Remix IDE | https://remix.ethereum.org |
-| Zenn      | https://zenn.dev           |
-| Qita      | https://qiita.com          |
-| OpenSea   | https://opensea.io         |
-| Etherscan | https://etherscan.io       |
-| Etherscan | https://etherscan.io       |
-| npm       | https://npmjs.com          |
-| go        | https://go.dev             |
-| geth      | https://geth.ethereum.org  |
-| node      | https://nodejs.org         |
-| solidity  | https://soliditylang.org   |

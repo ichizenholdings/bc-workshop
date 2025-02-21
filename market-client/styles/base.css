@@ -1,0 +1,35 @@
+:root {
+    /* カラーパレット */
+    --primary: #6366f1;      /* メインカラー（インディゴ） */
+    --primary-dark: #4f46e5; /* メインカラーの暗め */
+    --secondary: #3b82f6;    /* アクセントカラー（ブルー） */
+    --secondary-dark: #2563eb; /* アクセントカラーの暗め */
+
+    /* 背景色 */
+    --bg-primary: #1a1a1a;   /* メイン背景 */
+    --bg-card: #2d2d2d;      /* カード背景 */
+    --bg-element: #363636;   /* 要素背景 */
+
+    /* テキストカラー */
+    --text-primary: #ffffff; /* メインテキスト */
+    --text-secondary: #a0a0a0; /* サブテキスト */
+    --text-muted: #888888;   /* 控えめなテキスト */
+}
+
+/* ベーススタイル */
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 40px;
+    color: var(--text-primary);
+    font-weight: 300;
+}

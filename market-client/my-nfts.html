@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My NFTs</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethereum-blockies@0.1.1/blockies.min.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body>
+    <nav class="nav-menu">
+        <a href="index.html">Gallery</a>
+        <a href="my-nfts.html" class="active">My NFTs</a>
+    </nav>
+
+    <h1>My NFT Collection</h1>
+    <div id="wallet-section">
+        <button id="connect-wallet" class="connect-button">Connect Wallet</button>
+        <div id="wallet-info" class="wallet-info" style="display: none;">
+            <div class="wallet-header">
+                <div id="jazzicon" class="jazzicon"></div>
+                <div class="wallet-details">
+                    <p id="wallet-address" class="wallet-address"></p>
+                    <p id="wallet-balance" class="wallet-balance"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="loading" class="loading">Connect wallet to view your NFTs</div>
+    <div id="nft-container"></div>
+
+    <script type="module">
+        import { NFTService, NFT_CONFIG } from './js/nft-service.js';
+        import { UIManager } from './js/ui-manager.js';
+        import { MarketplaceService } from './js/marketplace-service.js';
+
+        let web3, accounts, nftService, marketplaceService, uiManager;
+
+        async function updateWalletInfo(address) {
+            // アドレス表示の更新
+            const walletAddress = document.getElementById('wallet-address');
+            walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(38)}`;
+
+            // 残高の取得と表示
+            const balance = await web3.eth.getBalance(address);
+            const balanceEth = web3.utils.fromWei(balance, 'ether');
+            const walletBalance = document.getElementById('wallet-balance');
+            walletBalance.textContent = `${Number(balanceEth).toFixed(4)} ETH`;
+
+            // Blockiesアイコンの生成
+            const jazziconElement = document.getElementById('jazzicon');
+            jazziconElement.innerHTML = '';
+            const icon = window.blockies.create({
+                seed: address.toLowerCase(),
+                size: 8,
+                scale: 5
+            });
+            jazziconElement.appendChild(icon);
+
+            // ウォレット情報の表示
+            document.getElementById('wallet-info').style.display = 'block';
+            document.getElementById('connect-wallet').style.display = 'none';
+        }
+
+        async function connectWallet() {
+            try {
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('MetaMaskがインストールされていません');
+                }
+
+                accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts'
+                });
+
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('ウォレットの接続に失敗しました');
+                }
+
+                await updateWalletInfo(accounts[0]);
+                await displayMyNFTs();
+
+            } catch (error) {
+                console.error("Wallet connection error:", error);
+                alert(error.message);
+            }
+        }
+
+        // アカウント変更時のハンドラーも更新
+        if (window.ethereum) {
+            window.ethereum.on('accountsChanged', async function (newAccounts) {
+                accounts = newAccounts;
+                if (accounts.length > 0) {
+                    await updateWalletInfo(accounts[0]);
+                    await displayMyNFTs();
+                } else {
+                    document.getElementById('wallet-info').style.display = 'none';
+                    document.getElementById('connect-wallet').style.display = 'block';
+                    document.getElementById('nft-container').innerHTML = '';
+                }
+            });
+        }
+
+        async function displayMyNFTs() {
+            if (!accounts || !accounts[0]) return;
+
+            const loading = document.getElementById("loading");
+            loading.textContent = "Loading your NFTs...";
+            loading.style.display = 'block';
+
+            try {
+                for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
+                    try {
+                        const owner = await nftService.contract.methods.ownerOf(tokenId).call();
+                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
+                            const nftData = await nftService.getNFTData(tokenId);
+                            const nftCard = uiManager.createMyNFTCard(nftData, listNFT);
+                            uiManager.container.appendChild(nftCard);
+                        }
+                    } catch (error) {
+                        console.error(`Token ${tokenId} の読み込みに失敗:`, error);
+                    }
+                }
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function listNFT(tokenId) {
+            try {
+                const price = prompt("Enter price in ETH:", "0.1");
+                if (!price) return;
+
+                const priceWei = web3.utils.toWei(price, 'ether');
+                await marketplaceService.listNFT(tokenId, priceWei);
+                alert("NFT listed successfully!");
+                location.reload();
+            } catch (error) {
+                console.error("Failed to list NFT:", error);
+                alert("Failed to list NFT: " + error.message);
+            }
+        }
+
+        async function initialize() {
+            if (typeof window.ethereum !== 'undefined') {
+                web3 = new Web3(window.ethereum);
+                nftService = new NFTService();
+                marketplaceService = new MarketplaceService(web3);
+                uiManager = new UIManager();
+
+                document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+
+                // Check if already connected
+                const connectedAccounts = await web3.eth.getAccounts();
+                if (connectedAccounts.length > 0) {
+                    accounts = connectedAccounts;
+                    document.getElementById('wallet-address').textContent =
+                        `Connected: ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
+                    document.getElementById('connect-wallet').style.display = 'none';
+                    displayMyNFTs();
+                }
+            } else {
+                alert('Please install MetaMask!');
+            }
+        }
+
+        initialize();
+    </script>
+</body>
+
+</html>

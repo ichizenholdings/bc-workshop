@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Display</title>
+    <!-- Web3.jsの読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body>
+    <nav class="nav-menu">
+        <a href="index.html" class="active">Gallery</a>
+        <a href="my-nfts.html">My NFTs</a>
+    </nav>
+
+    <h1>NFT Gallery</h1>
+    <!-- ウォレット接続は不要なのでボタンを削除 -->
+    <div id="loading" class="loading">Loading NFTs...</div>
+    <div id="nft-container"></div>
+
+    <script type="module">
+        import { NFTService, NFT_CONFIG } from './js/nft-service.js';
+        import { UIManager } from './js/ui-manager.js';
+
+        async function initialize() {
+            const nftService = new NFTService();
+            const uiManager = new UIManager();
+
+            uiManager.clearContainer();
+
+            for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
+                try {
+                    const nftData = await nftService.getNFTData(tokenId);
+                    const nftCard = uiManager.createNFTCard(nftData);
+                    uiManager.container.appendChild(nftCard);
+                } catch (error) {
+                    uiManager.showError(tokenId, error);
+                }
+            }
+
+            uiManager.hideLoading();
+        }
+
+        initialize();
+    </script>
+</body>
+
+</html>
