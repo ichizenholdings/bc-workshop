@@ -1,17 +1,94 @@
 import { NFT_CONFIG } from './nft-service.js';
 
+// マーケットプレイスの設定
+const MARKETPLACE_CONFIG = {
+    CONTRACT_ADDRESS: "YOUR_MARKETPLACE_CONTRACT_ADDRESS" // デプロイ後のアドレスを設定
+};
+
+// マーケットプレイスのABI
+const MARKETPLACE_ABI = [
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "itemId",
+                "type": "uint256"
+            },
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "nftContract",
+                "type": "address"
+            },
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "seller",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+            }
+        ],
+        "name": "MarketItemCreated",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "itemId",
+                "type": "uint256"
+            }
+        ],
+        "name": "buyItem",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "nftContract",
+                "type": "address"
+            },
+            {
+                "internalType": "uint256",
+                "name": "tokenId",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "price",
+                "type": "uint256"
+            }
+        ],
+        "name": "listItem",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    }
+];
+
 class MarketplaceService {
     constructor(web3) {
         this.web3 = web3;
-        // Marketplace.jsonからABIを取得
-        fetch('../contracts/artifacts/Marketplace.json')
-            .then(response => response.json())
-            .then(data => {
-                this.contract = new web3.eth.Contract(
-                    data.abi,
-                    MARKETPLACE_CONFIG.CONTRACT_ADDRESS
-                );
-            });
+        this.contract = new web3.eth.Contract(
+            MARKETPLACE_ABI,
+            MARKETPLACE_CONFIG.CONTRACT_ADDRESS
+        );
     }
 
     async listNFT(tokenId, priceWei) {
@@ -39,24 +116,5 @@ class MarketplaceService {
             .send({ from: accounts[0] });
     }
 }
-
-// マーケットプレイスの設定
-const MARKETPLACE_CONFIG = {
-    CONTRACT_ADDRESS: "YOUR_MARKETPLACE_CONTRACT_ADDRESS" // デプロイ後のアドレスを設定
-};
-
-const MARKETPLACE_ABI = [
-    {
-        "inputs": [
-            {"name": "nftContract", "type": "address"},
-            {"name": "tokenId", "type": "uint256"},
-            {"name": "price", "type": "uint256"}
-        ],
-        "name": "listItem",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-    }
-];
 
 export { MarketplaceService };
