@@ -88,3 +88,13 @@
     margin: 20px auto;
     max-width: 400px;
 }
+
+.no-nfts-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px;
+    background-color: var(--bg-card);
+    border-radius: 12px;
+    margin: 20px auto;
+    max-width: 400px;
+}

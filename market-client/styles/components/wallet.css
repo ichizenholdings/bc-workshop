@@ -38,3 +38,13 @@
     margin: 0;
     font-weight: 500;
 }
+
+.network-info {
+    color: var(--text-accent);
+    font-size: 0.9em;
+    margin: 5px 0 0 0;
+    padding: 2px 8px;
+    background-color: var(--bg-accent);
+    border-radius: 4px;
+    display: inline-block;
+}

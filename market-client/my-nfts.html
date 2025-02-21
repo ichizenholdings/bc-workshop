@@ -25,6 +25,7 @@
                 <div class="wallet-details">
                     <p id="wallet-address" class="wallet-address"></p>
                     <p id="wallet-balance" class="wallet-balance"></p>
+                    <p id="network-info" class="network-info"></p>
                 </div>
             </div>
         </div>
@@ -41,27 +42,70 @@
         let web3, accounts, nftService, marketplaceService, uiManager, walletService;
 
         async function updateWalletInfo(address) {
-            const walletAddress = document.getElementById('wallet-address');
-            walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(38)}`;
+            try {
+                const walletAddress = document.getElementById('wallet-address');
+                walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(38)}`;
 
-            // 残高の取得と表示
-            const balance = await walletService.getBalance(address);
-            const walletBalance = document.getElementById('wallet-balance');
-            walletBalance.textContent = `${Number(balance).toFixed(4)} ETH`;
+                // 残高の取得と表示
+                const balance = await walletService.getBalance(address);
+                const walletBalance = document.getElementById('wallet-balance');
+                walletBalance.textContent = `${Number(balance).toFixed(4)} ETH`;
 
-            // Blockiesアイコンの生成
-            const jazziconElement = document.getElementById('jazzicon');
-            jazziconElement.innerHTML = '';
-            const icon = window.blockies.create({
-                seed: address.toLowerCase(),
-                size: 8,
-                scale: 5
-            });
-            jazziconElement.appendChild(icon);
+                // ネットワーク情報の取得と表示
+                const { networkName } = await walletService.getNetworkInfo();
+                const networkInfo = document.getElementById('network-info');
+                networkInfo.textContent = networkName;
 
-            // ウォレット情報の表示
-            document.getElementById('wallet-info').style.display = 'block';
-            document.getElementById('connect-wallet').style.display = 'none';
+                // Blockiesアイコンの生成
+                const jazziconElement = document.getElementById('jazzicon');
+                jazziconElement.innerHTML = '';
+                const icon = window.blockies.create({
+                    seed: address.toLowerCase(),
+                    size: 8,
+                    scale: 5
+                });
+                jazziconElement.appendChild(icon);
+
+                // ウォレット情報カードを表示
+                document.getElementById('wallet-info').style.display = 'block';
+                document.getElementById('connect-wallet').style.display = 'none';
+            } catch (error) {
+                console.error("ウォレット情報の更新に失敗:", error);
+            }
+        }
+
+        async function displayMyNFTs() {
+            const loading = document.getElementById("loading");
+            loading.textContent = "Loading your NFTs...";
+            loading.style.display = 'block';
+
+            try {
+                uiManager.clearContainer();
+                let hasNFTs = false;
+
+                for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
+                    try {
+                        const owner = await nftService.contract.methods.ownerOf(tokenId).call();
+                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
+                            hasNFTs = true;
+                            const nftData = await nftService.getNFTData(tokenId);
+                            const nftCard = uiManager.createMyNFTCard(nftData, listNFT);
+                            uiManager.container.appendChild(nftCard);
+                        }
+                    } catch (error) {
+                        console.error(`Token ${tokenId} の読み込みに失敗:`, error);
+                    }
+                }
+
+                if (!hasNFTs) {
+                    const noNFTsMessage = document.createElement('div');
+                    noNFTsMessage.className = 'no-nfts-message';
+                    noNFTsMessage.textContent = 'You don\'t own any NFTs yet';
+                    uiManager.container.appendChild(noNFTsMessage);
+                }
+            } finally {
+                loading.style.display = 'none';
+            }
         }
 
         async function connectWallet() {
@@ -73,8 +117,12 @@
                 window.web3 = web3;
                 accounts = [address];
 
-                // ウォレット情報を更新
-                await updateWalletInfo(address);
+                // サービスの初期化
+                nftService = new NFTService(web3);
+                marketplaceService = new MarketplaceService(web3);
+
+                // ウォレット情報の更新（非同期）
+                updateWalletInfo(address);
 
                 // アカウント変更時のコールバックを設定
                 walletService.setAccountsChangedCallback(async (newAddress) => {
@@ -83,36 +131,11 @@
                     await displayMyNFTs();
                 });
 
-                // NFTの表示を更新
-                await displayMyNFTs();
+                // NFTの表示（非同期）
+                displayMyNFTs();
             } catch (error) {
                 console.error("ウォレット接続エラー:", error);
                 alert("ウォレット接続に失敗しました: " + error.message);
-            }
-        }
-
-        async function displayMyNFTs() {
-            if (!accounts || !accounts[0]) return;
-
-            const loading = document.getElementById("loading");
-            loading.textContent = "Loading your NFTs...";
-            loading.style.display = 'block';
-
-            try {
-                for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
-                    try {
-                        const owner = await nftService.contract.methods.ownerOf(tokenId).call();
-                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
-                            const nftData = await nftService.getNFTData(tokenId);
-                            const nftCard = uiManager.createMyNFTCard(nftData, listNFT);
-                            uiManager.container.appendChild(nftCard);
-                        }
-                    } catch (error) {
-                        console.error(`Token ${tokenId} の読み込みに失敗:`, error);
-                    }
-                }
-            } finally {
-                loading.style.display = 'none';
             }
         }
 
@@ -132,26 +155,8 @@
         }
 
         async function initialize() {
-            if (typeof window.ethereum !== 'undefined') {
-                web3 = new Web3(window.ethereum);
-                nftService = new NFTService();
-                marketplaceService = new MarketplaceService(web3);
-                uiManager = new UIManager();
-
-                document.getElementById('connect-wallet').addEventListener('click', connectWallet);
-
-                // Check if already connected
-                const connectedAccounts = await web3.eth.getAccounts();
-                if (connectedAccounts.length > 0) {
-                    accounts = connectedAccounts;
-                    document.getElementById('wallet-address').textContent =
-                        `Connected: ${accounts[0].substring(0, 6)}...${accounts[0].substring(38)}`;
-                    document.getElementById('connect-wallet').style.display = 'none';
-                    displayMyNFTs();
-                }
-            } else {
-                alert('Please install MetaMask!');
-            }
+            uiManager = new UIManager();
+            document.getElementById('connect-wallet').addEventListener('click', connectWallet);
         }
 
         initialize();

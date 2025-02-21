@@ -3,6 +3,7 @@ class WalletService {
         this.web3 = null;
         this.accounts = [];
         this.onAccountsChanged = null;
+        this.onChainChanged = null;
     }
 
     async connect() {
@@ -55,6 +56,35 @@ class WalletService {
 
     setAccountsChangedCallback(callback) {
         this.onAccountsChanged = callback;
+    }
+
+    async getNetworkInfo() {
+        if (!this.web3) {
+            throw new Error("Web3が初期化されていません");
+        }
+        const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+        const networkName = this.getNetworkName(chainId);
+        return { chainId, networkName };
+    }
+
+    getNetworkName(chainId) {
+        const networks = {
+            '0x1': 'Ethereum Mainnet',
+            '0x5': 'Goerli Testnet',
+            '0xaa36a7': 'Sepolia Testnet',
+            '0x89': 'Polygon Mainnet',
+            '0x13881': 'Mumbai Testnet'
+        };
+        return networks[chainId] || `Unknown Network (${chainId})`;
+    }
+
+    setChainChangedCallback(callback) {
+        this.onChainChanged = callback;
+        window.ethereum.on('chainChanged', (chainId) => {
+            if (this.onChainChanged) {
+                this.onChainChanged(chainId);
+            }
+        });
     }
 }
 
