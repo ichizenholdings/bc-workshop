@@ -1,3 +1,3 @@
 [submodule "deno-eth-wallet"]
 	path = deno-eth-wallet
-	url = git@github.com:posaune0423/deno-eth-wallet.git
+	url = https://github.com/posaune0423/deno-eth-wallet.git
