@@ -7,6 +7,7 @@
     <title>NFT Display</title>
     <!-- Web3.jsの読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/web3@4.16.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethereum-blockies@0.1.1/blockies.min.js"></script>
     <link rel="stylesheet" href="styles/style.css">
 </head>
 
@@ -17,7 +18,22 @@
     </nav>
 
     <h1>NFT Gallery</h1>
-    <!-- ウォレット接続は不要なのでボタンを削除 -->
+
+    <!-- ウォレット接続セクションを追加 -->
+    <div id="wallet-section">
+        <button id="connect-wallet" class="connect-button">Connect Wallet</button>
+        <div id="wallet-info" class="wallet-info" style="display: none;">
+            <div class="wallet-header">
+                <div id="jazzicon" class="jazzicon"></div>
+                <div class="wallet-details">
+                    <p id="wallet-address" class="wallet-address"></p>
+                    <p id="wallet-balance" class="wallet-balance"></p>
+                    <p id="network-info" class="network-info"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="loading" class="loading">Loading NFTs...</div>
     <div id="nft-container"></div>
 
@@ -29,6 +45,39 @@
 
         let nftService, marketplaceService, uiManager, walletService;
 
+        async function updateWalletInfo(address) {
+            try {
+                const walletAddress = document.getElementById('wallet-address');
+                walletAddress.textContent = `${address.substring(0, 6)}...${address.substring(38)}`;
+
+                // 残高の取得と表示
+                const balance = await walletService.getBalance(address);
+                const walletBalance = document.getElementById('wallet-balance');
+                walletBalance.textContent = `${Number(balance).toFixed(4)} ETH`;
+
+                // ネットワーク情報の取得と表示
+                const { networkName } = await walletService.getNetworkInfo();
+                const networkInfo = document.getElementById('network-info');
+                networkInfo.textContent = networkName;
+
+                // Blockiesアイコンの生成
+                const jazziconElement = document.getElementById('jazzicon');
+                jazziconElement.innerHTML = '';
+                const icon = window.blockies.create({
+                    seed: address.toLowerCase(),
+                    size: 8,
+                    scale: 5
+                });
+                jazziconElement.appendChild(icon);
+
+                // ウォレット情報カードを表示
+                document.getElementById('wallet-info').style.display = 'block';
+                document.getElementById('connect-wallet').style.display = 'none';
+            } catch (error) {
+                console.error("ウォレット情報の更新に失敗:", error);
+            }
+        }
+
         async function buyNFT(tokenId) {
             try {
                 if (!walletService || !walletService.isConnected()) {
@@ -36,13 +85,13 @@
                     return;
                 }
 
-                const price = prompt("購入価格を入力してください（ETH）:", "0.1");
+                const price = prompt("購入価格を入力してください(ETH):", "0.1");
                 if (!price) return;
 
                 const priceWei = Web3.utils.toWei(price, 'ether');
                 await marketplaceService.buyNFT(tokenId, priceWei);
 
-                alert("NFTの購入が完了しました！");
+                alert("NFTの購入が完了しました!");
                 location.reload();
             } catch (error) {
                 console.error("NFT購入エラー:", error);
@@ -53,36 +102,71 @@
         async function displayNFTs() {
             uiManager.clearContainer();
 
-            for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
-                try {
-                    const nftData = await nftService.getNFTData(tokenId);
-                    const nftCard = uiManager.createNFTCard(nftData, buyNFT);
-                    uiManager.container.appendChild(nftCard);
-                } catch (error) {
-                    uiManager.showError(tokenId, error);
+            try {
+                // Get the total supply of tokens dynamically
+                const totalSupply = await nftService.getTotalSupply();
+                console.log(`Total NFTs minted: ${totalSupply}`);
+
+                // Loop through all tokens from 1 to totalSupply
+                for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
+                    try {
+                        const nftData = await nftService.getNFTData(tokenId);
+                        // Ensure nftData has the correct structure for createNFTCard
+                        if (!nftData.name && nftData.tokenId !== undefined) {
+                            // If we're getting the old format, convert it to the new format
+                            nftData.name = `NFT ${nftData.tokenId}`;
+                            nftData.description = `This is NFT with token ID ${nftData.tokenId}`;
+                            nftData.image = nftData.imageUrl; // Ensure image property exists
+                        }
+
+                        let marketPrice = null;
+                        try {
+                            const marketItem = await marketplaceService.getMarketItem(tokenId);
+                            // Check if marketItem exists and has a non-zero price
+                            if (marketItem && marketItem.price && marketItem.price !== "0") {
+                                marketPrice = marketItem.price;
+                            }
+                        } catch (err) {
+                            // If an error occurs (e.g., not listed), marketPrice remains null
+                        }
+                        // Pass marketPrice as third parameter to createNFTCard
+                        const nftCard = uiManager.createNFTCard(nftData, buyNFT, marketPrice);
+                        uiManager.container.appendChild(nftCard);
+                    } catch (error) {
+                        console.error(`Token ${tokenId} の読み込みに失敗:`, error);
+                        uiManager.showError(tokenId, error);
+                    }
                 }
+            } catch (error) {
+                console.error("Failed to get total supply:", error);
+                uiManager.container.innerHTML = `<div class="error-message">NFTの総発行数の取得に失敗しました: ${error.message}</div>`;
             }
 
             uiManager.hideLoading();
         }
 
-        async function initialize() {
+        async function connectWallet() {
             try {
-                // 1. まずUIManagerを初期化
-                uiManager = new UIManager();
-
-                // 2. WalletServiceを初期化して接続
                 walletService = new WalletService();
-                const { web3 } = await walletService.connect();
+                const { address, web3 } = await walletService.connect();
 
-                // 3. Web3が初期化された後に他のサービスを初期化
+                // サービスの初期化
                 nftService = new NFTService(web3);
                 marketplaceService = new MarketplaceService(web3);
 
-                // 4. NFTを表示
+                // ウォレット情報の更新
+                updateWalletInfo(address);
+
+                // アカウント変更時のコールバックを設定
+                walletService.setAccountsChangedCallback(async (newAddress) => {
+                    await updateWalletInfo(newAddress);
+                    await displayNFTs();
+                });
+
+                // NFTの表示
                 await displayNFTs();
             } catch (error) {
-                console.error("初期化エラー:", error);
+                console.error("ウォレット接続エラー:", error);
                 uiManager.hideLoading();
                 // エラーメッセージを表示
                 const errorDiv = document.createElement("div");
@@ -90,6 +174,20 @@
                 errorDiv.textContent = "ウォレットを接続してください";
                 uiManager.container.appendChild(errorDiv);
             }
+        }
+
+        async function initialize() {
+            // 1. まずUIManagerを初期化
+            uiManager = new UIManager();
+
+            // 2. Connect Walletボタンのイベントリスナーを設定
+            document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+
+            // 3. 初期表示ではNFTサービスをRPC_URLで初期化（読み取り専用）
+            nftService = new NFTService();
+
+            // 4. NFTを表示（ウォレット接続なしでも閲覧可能）
+            await displayNFTs();
         }
 
         initialize();

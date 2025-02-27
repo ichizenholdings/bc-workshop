@@ -1,21 +1,27 @@
-# NFT マーケットプレイス開発ワークショップ
+# ブロックチェーン技術講座ワークショップ②
 
-このリポジトリは、ブロックチェーン技術講座のワークショップ②で使用する NFT マーケットプレイスの開発環境です。ERC721 トークンの作成、表示、取引機能を実装したシンプルな dApp を構築します。
+このリポジトリは、ブロックチェーン技術講座ワークショップ②で使用するGithubRepositoryです。
 
 ## 概要
 
 このワークショップでは以下の内容を学びます：
 
-1. **スマートコントラクト開発**
+1. **Wallet アプリケーションの開発**
 
-   - ERC721 トークン（NFT）の実装
-   - マーケットプレイスコントラクトの実装
-   - Solidity の基本的なパターンと設計
+- BIP39 のフレーズから秘密鍵・アドレスを生成
+- ウォレットからトランザクションを送信
+- トランザクションの結果を確認
 
-2. **フロントエンド開発**
-   - Web3.js を使用したブロックチェーン連携
-   - ウォレット接続（MetaMask/Rabby）
-   - NFT の表示と取引 UI の実装
+2. **NFT、及び NFT マーケットプレイスコントラクトの開発**
+
+- ERC721 を用いたトークンの実装
+- NFT の表示とマーケット機能の実装
+
+3. **マーケットプレイスUIの開発**
+
+- マーケットプレイスのUIの実装
+- walletの接続
+- [Web3.js](https://web3js.readthedocs.io/)を使用したブロックチェーン連携
 
 ## リポジトリ構成
 
@@ -45,57 +51,56 @@
 
 ### 必要なツール
 
+- [Go](https://go.dev/doc/install)
+- [Git](https://git-scm.com/downloads/win)
 - [deno](https://deno.land/)
 - [Node.js](https://nodejs.org/) (v22 以上)
 - [Rabby Wallet](https://rabby.io/)
 - [Visual Studio Code](https://code.visualstudio.com/) + [Solidity 拡張機能](https://marketplace.visualstudio.com/items?itemName=JuanBlanco.solidity)
 - [Remix IDE](https://remix.ethereum.org/)
 
+### 各種ツールのインストール
+
+- Go のインストール
+
+```shell
+winget install --id GoLang.Go -e
+```
+
+- Git のインストール
+
+```shell
+winget install --id Git.Git -e --source winget
+```
+
+- Deno のインストール
+
+```shell
+irm https://deno.land/install.ps1 | iex
+```
+
+- Node.js のインストール
+
+```shell
+winget install OpenJS.NodeJS.LTS
+```
+
+- [VsCode](https://code.visualstudio.com/docs/setup/windows#_install-vs-code-on-windows)のインストール
+
 ### セットアップ手順
 
 1. **リポジトリのクローン**
 
-   ```bash
-   git clone <repository-url>
-   cd nft-marketplace-workshop
-   ```
+```shell
+git clone <repository-url>
+cd bc-workshop
+```
 
-2. **フロントエンドの設定**
+2. submodule の初期化
 
-   ```bash
-   cd market-client
-   # Live Server などの HTTP サーバーで実行
-   ```
-
-3. **コントラクトのデプロイ**
-
-   - Remix IDE または Hardhat を使用してコントラクトをデプロイ
-   - デプロイしたコントラクトアドレスを `market-client/js/nft-service.js` と `market-client/js/marketplace-service.js` に設定
-
-## ワークショップの進め方
-
-### ステップ 1: スマートコントラクトの理解
-
-1. `MyToken.sol` - ERC721 トークンの実装を確認
-2. `IMarketplace.sol` - マーケットプレイスのインターフェースを確認
-3. `Marketplace.sol` - マーケットプレイスの実装を確認
-
-### ステップ 2: コントラクトのデプロイ
-
-1. Sepolia テストネットにコントラクトをデプロイ
-2. フロントエンドの設定ファイルにコントラクトアドレスを設定
-
-### ステップ 3: フロントエンドの実装
-
-1. ウォレット接続機能の確認
-2. NFT 表示機能の確認
-3. NFT 取引機能の確認
-
-### ステップ 4: 機能拡張（オプション）
-
-1. NFT メタデータの拡張
-2. 検索・フィルタリング機能の追加
-3. オークション機能の実装
+```shell
+git submodule update --init --recursive
+```
 
 ## 参考リソース
 

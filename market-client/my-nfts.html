@@ -75,37 +75,45 @@
         }
 
         async function displayMyNFTs() {
-            const loading = document.getElementById("loading");
-            loading.textContent = "Loading your NFTs...";
-            loading.style.display = 'block';
-
             try {
-                uiManager.clearContainer();
-                let hasNFTs = false;
+                // Get the total supply of tokens dynamically
+                const totalSupply = await nftService.getTotalSupply();
+                console.log(`Total NFTs minted: ${totalSupply}`);
 
-                for (let tokenId = 0; tokenId < NFT_CONFIG.MAX_TOKEN_ID; tokenId++) {
+                const myNFTs = [];
+                const accounts = await window.web3.eth.getAccounts();
+                const currentAccount = accounts[0];
+
+                // Loop through all tokens from 1 to totalSupply
+                for (let tokenId = 1; tokenId <= totalSupply; tokenId++) {
                     try {
-                        const owner = await nftService.contract.methods.ownerOf(tokenId).call();
-                        if (owner.toLowerCase() === accounts[0].toLowerCase()) {
-                            hasNFTs = true;
+                        const owner = await nftService.getOwnerOf(tokenId);
+                        // Check if the current account owns this NFT
+                        if (owner.toLowerCase() === currentAccount.toLowerCase()) {
                             const nftData = await nftService.getNFTData(tokenId);
-                            const nftCard = uiManager.createMyNFTCard(nftData, listNFT);
-                            uiManager.container.appendChild(nftCard);
+                            myNFTs.push(nftData);
                         }
                     } catch (error) {
-                        console.error(`Token ${tokenId} の読み込みに失敗:`, error);
+                        console.error(`Error checking token ${tokenId}:`, error);
                     }
                 }
 
-                if (!hasNFTs) {
-                    const noNFTsMessage = document.createElement('div');
-                    noNFTsMessage.className = 'no-nfts-message';
-                    noNFTsMessage.textContent = 'You don\'t own any NFTs yet';
-                    uiManager.container.appendChild(noNFTsMessage);
+                // Display the NFTs
+                if (myNFTs.length === 0) {
+                    document.getElementById("nft-container").innerHTML = "<p>You don't own any NFTs yet.</p>";
+                } else {
+                    document.getElementById("nft-container").innerHTML = "";
+                    myNFTs.forEach(nftData => {
+                        const nftCard = uiManager.createMyNFTCard(nftData, listNFT);
+                        document.getElementById("nft-container").appendChild(nftCard);
+                    });
                 }
-            } finally {
-                loading.style.display = 'none';
+            } catch (error) {
+                console.error("Failed to get total supply:", error);
+                document.getElementById("nft-container").innerHTML = `<div class="error-message">NFTの総発行数の取得に失敗しました: ${error.message}</div>`;
             }
+
+            document.getElementById("loading").style.display = "none";
         }
 
         async function connectWallet() {
@@ -144,7 +152,7 @@
                 const price = prompt("Enter price in ETH:", "0.1");
                 if (!price) return;
 
-                const priceWei = web3.utils.toWei(price, 'ether');
+                const priceWei = window.web3.utils.toWei(price, 'ether');
                 await marketplaceService.listNFT(tokenId, priceWei);
                 alert("NFT listed successfully!");
                 location.reload();
