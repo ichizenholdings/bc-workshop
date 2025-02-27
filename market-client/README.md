@@ -99,7 +99,10 @@ market-client/
 
 1. **NFT ギャラリーの閲覧**
 
-- `index.html`にアクセス
+- 左側のfile exploerから`inde.html`を右クリックしLiver Serverで開くを選択
+
+![Screenshot 2025-02-27 at 20 00 34](https://github.com/user-attachments/assets/79a0d666-35e9-4f84-b283-54c2897e20d9)
+
 
 - 全ての NFT とその所有者を確認
 - 購入可能な NFT に対して購入操作
