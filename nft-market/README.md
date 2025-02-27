@@ -10,6 +10,23 @@
 
 ## 事前準備
 
+Node.jsのインストール
+
+```shell
+winget install OpenJS.NodeJS.LTS
+```
+
+もしくは[公式のインストーラ](https://nodejs.org/en)から
+
+
+インストールできたか確認
+
+```shell
+node -V
+v22.14.0
+```
+
+
 remixdのインストール
 
 ```bash

@@ -99,14 +99,16 @@ market-client/
 
 1. **NFT ギャラリーの閲覧**
 
-   - `index.html`にアクセス
-   - 全ての NFT とその所有者を確認
-   - 購入可能な NFT に対して購入操作
+- `index.html`にアクセス
+
+- 全ての NFT とその所有者を確認
+- 購入可能な NFT に対して購入操作
 
 2. **マイ NFT の管理**
-   - `my-nfts.html`にアクセス
-   - MetaMask でウォレット接続
-   - 所有 NFT の確認と出品操作
+
+- `my-nfts.html`にアクセス
+- MetaMask でウォレット接続
+- 所有 NFT の確認と出品操作
 
 ## 開発ガイドライン
 
